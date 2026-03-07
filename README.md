@@ -1,6 +1,6 @@
 # Delta Lake vs Apache Iceberg — Commit-by-Commit Walkthrough
 
-## Human-designed, Human-written, AI-generated walkthrough.
+## Human-designed, Human-written, AI-documented walkthrough.
 
 This walkthrough performs **equivalent operations on both Delta Lake and Apache Iceberg** and inspects the **actual metadata generated during execution**.
 
