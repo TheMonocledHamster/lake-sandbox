@@ -43,4 +43,4 @@ WORKDIR /workspace
 
 EXPOSE 8888 4040
 
-CMD ["jupyter","lab","--ip=0.0.0.0","--port=8888","--no-browser","--IdentityProvider.token="]
+CMD ["jupyter","lab","--ip=0.0.0.0","--port=8888","--no-browser","--IdentityProvider.token=", "--ServerApp.disable_check_xsrf=True"]
