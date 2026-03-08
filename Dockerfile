@@ -1,32 +1,46 @@
-FROM apache/spark:3.5.2
+FROM apache/spark:4.0.2
+
+ARG SPARK_VERSION=4.0.2
+ARG DELTA_VERSION=4.0.0
+ARG ICEBERG_VERSION=1.6.1
+ARG SCALA_VERSION=2.13
 
 USER root
 
-# Install minimal utilities
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    python3-pip \
-    jq \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends python3-pip curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python libraries used for experimentation
 RUN pip3 install --no-cache-dir \
-    delta-spark==3.2.0 \
-    pyiceberg
+    jupyterlab \
+    ipykernel \
+    py4j
 
-# Configure Spark packages and extensions automatically for pyspark
-ENV PYSPARK_SUBMIT_ARGS="\
---packages io.delta:delta-spark_2.12:3.2.0,org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2,org.apache.spark:spark-avro_2.12:3.5.2 \
---conf spark.sql.catalogImplementation=in-memory \
---conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension \
---conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
---conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
---conf spark.sql.catalog.local.type=hadoop \
---conf spark.sql.catalog.local.warehouse=/workspace/lake \
-pyspark-shell"
-
+ENV PYTHONPATH=/opt/spark/python
 ENV PYSPARK_PYTHON=python3
+ENV PYSPARK_DRIVER_PYTHON=python3
+
+RUN mkdir -p /home/spark \
+    && chown -R spark:spark /home/spark
+
+ENV HOME=/home/spark
+
+RUN curl -L https://repo1.maven.org/maven2/io/delta/delta-spark_${SCALA_VERSION}/${DELTA_VERSION}/delta-spark_${SCALA_VERSION}-${DELTA_VERSION}.jar \
+    -o /opt/spark/jars/delta-spark.jar \
+    && curl -L https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-4.0_${SCALA_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-4.0_${SCALA_VERSION}-${ICEBERG_VERSION}.jar \
+    -o /opt/spark/jars/iceberg-runtime.jar \
+    && curl -L https://repo1.maven.org/maven2/org/apache/spark/spark-avro_${SCALA_VERSION}/${SPARK_VERSION}/spark-avro_${SCALA_VERSION}-${SPARK_VERSION}.jar \
+    -o /opt/spark/jars/spark-avro.jar
+
+COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
+
+RUN mkdir -p /workspace /lake \
+    && chown -R spark:spark /workspace /lake
+
+USER spark
 
 WORKDIR /workspace
 
-RUN mkdir -p /workspace/lake
+EXPOSE 8888 4040
+
+CMD ["jupyter","lab","--ip=0.0.0.0","--port=8888","--no-browser","--IdentityProvider.token="]

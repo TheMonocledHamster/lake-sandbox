@@ -2,9 +2,15 @@ services:
   spark-lakehouse:
     build: .
     container_name: spark-lakehouse
+
     ports:
+      - "8888:8888"
       - "4040:4040"
+
     volumes:
-      - ./workspace:/workspace
-    stdin_open: true
-    tty: true
+      - workspace:/workspace
+      - lake:/lake
+
+volumes:
+  workspace:
+  lake:
